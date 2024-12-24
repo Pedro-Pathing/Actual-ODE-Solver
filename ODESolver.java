@@ -1,8 +1,5 @@
-import org.apache.commons.math3.ode.FirstOrderDifferentialEquations;
-import org.apache.commons.math3.ode.FirstOrderIntegrator;
-import org.apache.commons.math3.ode.nonstiff.DormandPrince853Integrator;
-import org.apache.commons.math3.ode.sampling.StepHandler;
-import org.apache.commons.math3.ode.sampling.StepInterpolator;
+import org.apache.commons.math3.analysis.integration.SimpsonIntegrator;
+import org.apache.commons.math3.util.FastMath;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -10,71 +7,54 @@ import java.util.Scanner;
 
 public class ODESolver {
 
-    public static class VelocityAndThetaODE implements FirstOrderDifferentialEquations {
-        private double vmax;    // Maximum velocity in inches/second
-        private double mu_k;    // Coefficient of kinetic friction
-        private double N;       // Normal force in Newtons
-        private double c1;      // Sinusoidal coefficient
+    // Compute the velocity vector based on the provided velocity equation
+    public static double[] computeVelocity(double[] PPrime, double[] R, double theta, double vmax, double mu_k, double N, double c1) {
+        double cosTheta = FastMath.cos(theta);
+        double sinTheta = FastMath.sin(theta);
+        double magnitude = vmax - (PPrime[0] / R[0]) * mu_k * N + c1 * Math.abs(sinTheta);
 
-        public VelocityAndThetaODE(double vmax, double mu_k, double N, double c1) {
-            this.vmax = vmax;
-            this.mu_k = mu_k;
-            this.N = N;
-            this.c1 = c1;
-        }
-
-        @Override
-        public int getDimension() {
-            return 2; // x and y components only
-        }
-
-        @Override
-        public void computeDerivatives(double t, double[] state, double[] dState) {
-            double x = state[0];
-            double y = state[1];
-
-            double frictionForce = mu_k * N + c1 * Math.abs(y);
-            dState[0] = vmax - frictionForce; // dx/dt
-            dState[1] = 0; // dy/dt (constant heading, no vertical movement)
-        }
+        return new double[]{PPrime[0] * magnitude * cosTheta, PPrime[1] * magnitude * sinTheta};
     }
 
-    public static double calculateArcLength(List<double[]> waypoints) {
-        double arcLength = 0.0;
-
-        for (int i = 1; i < waypoints.size(); i++) {
-            double[] p1 = waypoints.get(i - 1);
-            double[] p2 = waypoints.get(i);
-
-            double distance = Math.sqrt(Math.pow(p2[0] - p1[0], 2) + Math.pow(p2[1] - p1[1], 2));
-            arcLength += distance;
+    // Compute waypoint using Lagrange interpolation
+    public static double[] computeWaypoint(double[] x, double[] y, double t) {
+        double xt = 0, yt = 0;
+        for (int i = 0; i < x.length; i++) {
+            double li = 1;
+            for (int j = 0; j < x.length; j++) {
+                if (i != j) {
+                    li *= (t - j) / (i - j);
+                }
+            }
+            xt += li * x[i];
+            yt += li * y[i];
         }
-
-        return arcLength;
+        return new double[]{xt, yt};
     }
 
-    public static double[] calculateWaypointPosition(double P0, double P1, double P2, double P3, double s) {
-        double x = Math.pow(s, 3) * (P3 - 3 * P2 + 3 * P1 - P0) +
-                Math.pow(s, 2) * (3 * P2 - 6 * P1 + 3 * P0) +
-                s * (3 * P1 - 3 * P0) +
-                P0;
-        double y = Math.pow(s, 2) * (P3 - 3 * P2 + 3 * P1 - P0) +
-                6 * s * (P2 - 2 * P1 + P0) +
-                (3 * P1 - P0);
-        return new double[]{x, y};
-    }
-
+    // Validate a waypoint using the provided constraints
     public static boolean validateWaypoint(double x, double y, double a, double h, double W_s, double b, double k, double L_s) {
-        return a <= x && x <= 144 - a &&
-                a <= y && y <= 72 - a &&
-                Math.abs(x - h) >= W_s / 2 + b / 2 &&
-                Math.abs(y - k) >= L_s / 2 + b / 2;
+        return a <= y && y <= 144 - a &&
+                a <= x && x <= 72 - a &&
+                Math.abs(y - h) >= W_s / 2 + b / 2 &&
+                Math.abs(x - k) >= L_s / 2 + b / 2;
+    }
+
+    // Function to compute dt2/dTheta
+    public static double computeDt2OverDTheta(double theta0, double theta1, double omega) {
+        double dTheta = Math.abs(theta1 - theta0);
+        return dTheta / omega;
+    }
+
+    // Function for -dt1/dTheta
+    public static double calculateDt1OverDTheta(double theta, double vmax, double mu_k, double N, double c1) {
+        return -1 / (vmax - mu_k * N + c1 * Math.abs(Math.sin(theta)));
     }
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
 
-        // Inputs
+        // User inputs
         System.out.println("Enter maximum velocity (vmax) in inches/second: ");
         double vmax = scanner.nextDouble();
 
@@ -106,45 +86,66 @@ public class ODESolver {
         double k = scanner.nextDouble();
         double L_s = scanner.nextDouble();
 
-        System.out.println("Enter waypoint positions (P0, P1, P2, P3): ");
-        double P0 = scanner.nextDouble();
-        double P1 = scanner.nextDouble();
-        double P2 = scanner.nextDouble();
-        double P3 = scanner.nextDouble();
+        System.out.println("Enter waypoint x-coordinates (comma or space-separated): ");
+        scanner.nextLine(); // Clear buffer
+        String[] xCoordsInput = scanner.nextLine().split("[,\\s]+");
+        double[] xCoords = new double[xCoordsInput.length];
+        for (int i = 0; i < xCoordsInput.length; i++) {
+            xCoords[i] = Double.parseDouble(xCoordsInput[i]);
+        }
 
-        // Step 1: Calculate dTheta and t2
-        double dTheta = Math.abs(H - theta0);
-        double t2 = dTheta / omega;
-        System.out.println("Time to align heading (t2): " + t2 + " seconds");
+        System.out.println("Enter waypoint y-coordinates (comma or space-separated): ");
+        String[] yCoordsInput = scanner.nextLine().split("[,\\s]+");
+        double[] yCoords = new double[yCoordsInput.length];
+        for (int i = 0; i < yCoordsInput.length; i++) {
+            yCoords[i] = Double.parseDouble(yCoordsInput[i]);
+        }
 
-        // Step 2: Generate and validate waypoints
-        List<double[]> waypoints = new ArrayList<>();
-        for (double s = 0; s <= 1; s += 0.01) { // s ranges from 0 to 1
-            double[] waypoint = calculateWaypointPosition(P0, P1, P2, P3, s);
+        // Calculate dt2/dTheta
+        double dt2OverDTheta = computeDt2OverDTheta(theta0, H, omega);
+
+        // Generate and validate waypoints
+        List<double[]> validWaypoints = new ArrayList<>();
+        for (double t = 0; t <= 1; t += 0.01) { // t ranges from 0 to 1
+            double[] waypoint = computeWaypoint(xCoords, yCoords, t);
             if (validateWaypoint(waypoint[0], waypoint[1], a, h, W_s, b, k, L_s)) {
-                waypoints.add(waypoint);
-            } else {
-                System.out.println("Waypoint validation failed at s = " + s);
+                validWaypoints.add(waypoint);
             }
         }
 
-        // Step 3: Calculate arc length (L)
-        double L = calculateArcLength(waypoints);
+        if (validWaypoints.isEmpty()) {
+            System.out.println("No valid waypoints found!");
+            return;
+        }
+
+        double[] P1 = validWaypoints.get(1);
+        double[] P2 = validWaypoints.get(validWaypoints.size() - 2);
+
+        System.out.println("First valid waypoint (P1): (" + P1[0] + ", " + P1[1] + ")");
+        System.out.println("Last valid waypoint (P2): (" + P2[0] + ", " + P2[1] + ")");
+
+        // Calculate arc length (L) using Simpson's integrator
+        SimpsonIntegrator integrator = new SimpsonIntegrator();
+        double L = integrator.integrate(10000, x -> {
+            double[] velocity = computeVelocity(new double[]{1, 0}, new double[]{1, 0}, theta0, vmax, mu_k, N, c1);
+            return Math.sqrt(velocity[0] * velocity[0] + velocity[1] * velocity[1]);
+        }, 0, 1);
+
         System.out.println("Arc length (L): " + L + " inches");
 
-        // Step 4: Solve ODE for t1
-        FirstOrderDifferentialEquations ode = new VelocityAndThetaODE(vmax, mu_k, N, c1);
-        double[] initialState = {0.0, 0.0}; // Starting position
-        double t0 = 0.0;
-        double t1Guess = 10.0; // Initial guess for t1 (time to traverse path)
-
-        FirstOrderIntegrator integrator = new DormandPrince853Integrator(1.0e-6, 1.0, 1.0e-10, 1.0e-10);
-        integrator.integrate(ode, t0, initialState, t1Guess, initialState);
-
-        // Step 5: Output results
-        double t1 = t1Guess;
+        // Calculate total time t1
+        double t1 = L / vmax;
         System.out.println("Time to traverse path (t1): " + t1 + " seconds");
-        System.out.println("Change in heading (dTheta): " + Math.toDegrees(dTheta) + " degrees");
-        System.out.println("Rate: -dt1/dTheta = " + (-t1 / dTheta) + " seconds/radian");
+
+        // Output the rate function
+        System.out.println("Rate (dt1/dTheta = -dt2/dTheta): ");
+        for (double theta = theta0; theta <= H; theta += 0.1) {
+            double rate = -dt2OverDTheta;
+            System.out.println("Theta (radians): " + theta + ", Rate: " + rate + " seconds/radian");
+        }
+
+        // Total time
+        double totalTime = t1 + (dt2OverDTheta * Math.abs(H - theta0));
+        System.out.println("Total time: " + totalTime + " seconds");
     }
 }
