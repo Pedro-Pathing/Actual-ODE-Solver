@@ -15,10 +15,6 @@ public class SolutionPoints {
         path = new CubicBezierCurve(P_0, P_1, P_2, P_3);
     }
 
-    public SolutionPoints(double theta, Point2D P_0, SquareCoordinates P_1, SquareCoordinates P_2, Point2D P_3, double t1, double t2) {
-        this(theta, P_0, P_1.getCartesian(), P_2.getCartesian(), P_3, t2, t1);
-    }
-
     public SolutionPoints(double theta, CubicBezierCurve path, double t1, double t2) {
         this.theta = theta;
         this.path = path;
