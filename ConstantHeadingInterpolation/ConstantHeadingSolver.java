@@ -3,6 +3,8 @@ package ConstantHeadingInterpolation;
 import MathUtil.CubicBezierCurve;
 import MathUtil.RectangleIntersection;
 import MathUtil.SolutionPoints;
+import com.cureos.numerics.Calcfc;
+import com.cureos.numerics.Cobyla;
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.ode.ContinuousOutputModel;
 import org.apache.commons.math3.ode.ExpandableStatefulODE;
@@ -38,33 +40,9 @@ public class ConstantHeadingSolver {
     private GillIntegrator integrator = new GillIntegrator(0.005);
     private ContinuousOutputModel outputModel = new ContinuousOutputModel();
 
-    private MultivariateFunction constantHeadingTimeFunction = new MultivariateFunction() {
-        @Override
-        public double value(double[] doubles) {
-            CubicBezierCurve bezierCurve = new CubicBezierCurve(p_0, new Point2D.Double(doubles[1], doubles[2]), new Point2D.Double(doubles[3], doubles[4]),p_3);
-           return findT1(solveDifferentialEquation(doubles[0], bezierCurve),bezierCurve.getArcLength()) + findT2(doubles[0]) + bezierCurve.intersectionWeight(isBlueAlliance, doubles[0], boundaryTolerance, submersibleTolerance, robotWidth, robotHeight);
-        }
-    };
-
     //doubles[0] = theta
     //doubles[1, 2] = square coordinates p_1
     //doubles[3, 4] = square coordinates p_2
-
-    private BOBYQAOptimizer optimizer = new BOBYQAOptimizer(10000);
-    private MultiStartMultivariateOptimizer optimizationPerformer = new MultiStartMultivariateOptimizer(optimizer, 30, new RandomVectorGenerator() {
-        @Override
-        public double[] nextVector() {
-            double[] output = new double[5];
-
-            output[0] = Math.random()*(theta_final - theta_initial) + theta_initial;
-            output[1] = Math.random()*(72-2*boundaryTolerance)+boundaryTolerance;
-            output[2] = Math.random()*(144-2*boundaryTolerance)+boundaryTolerance;
-            output[3] = Math.random()*(72-2*boundaryTolerance)+boundaryTolerance;
-            output[4] = Math.random()*(144-2*boundaryTolerance)+boundaryTolerance;
-
-            return output;
-        }
-    });
 
     public ConstantHeadingSolver(double vMax, double mass, double muK, double c1, double c2, Point2D p0, Point2D p3, double thetaT2, double boundaryTolerance, double submersibleDistanceTolerance, boolean isBlueAlliance, double thetaInitial, double angularVelocity, double robotWidth, double robotHeight) {
         v_max = vMax;
@@ -87,7 +65,7 @@ public class ConstantHeadingSolver {
     private double[] performOptimization() {
         OptimizationData initialGuess = new InitialGuess(new double[] {theta_final, p_0.getX(), (p_0.getY() + p_3.getY())/2, p_0.getX(), p_3.getY()});
         OptimizationData bounds = new SimpleBounds(new double[] {0, boundaryTolerance + FastMath.min(robotHeight, robotWidth), boundaryTolerance + FastMath.min(robotHeight, robotWidth), boundaryTolerance + FastMath.min(robotHeight, robotWidth), boundaryTolerance + FastMath.min(robotHeight, robotWidth)}, new double[] {FastMath.PI * 2, 72 - boundaryTolerance - FastMath.min(robotHeight, robotWidth), 144 - boundaryTolerance - FastMath.min(robotHeight, robotWidth), 72 - boundaryTolerance - FastMath.min(robotHeight, robotWidth), 144 - boundaryTolerance - FastMath.min(robotHeight, robotWidth)});
-        PointValuePair result = optimizationPerformer.optimize(initialGuess, new ObjectiveFunction(constantHeadingTimeFunction), GoalType.MINIMIZE, bounds);
+        PointValuePair result = null;
         return result.getPoint();
     }
 

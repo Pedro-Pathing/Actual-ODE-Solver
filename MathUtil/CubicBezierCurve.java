@@ -5,6 +5,7 @@ import org.apache.commons.math3.analysis.integration.SimpsonIntegrator;
 import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
 import org.apache.commons.math3.analysis.solvers.LaguerreSolver;
 import org.apache.commons.math3.complex.Complex;
+import org.apache.commons.math3.util.FastMath;
 
 import java.awt.geom.Point2D;
 
@@ -46,6 +47,11 @@ public class CubicBezierCurve {
 
     public Point2D.Double computePathPrimes(double t) {
         return new Point2D.Double(pathX.polynomialDerivative().value(t), pathY.polynomialDerivative().value(t));
+    }
+
+    public double theta(double t) {
+        Point2D.Double nabla = computePathPrimes(t);
+        return FastMath.atan2(nabla.getY(),nabla.getX());
     }
 
     public double pathInversion(Point2D point) {

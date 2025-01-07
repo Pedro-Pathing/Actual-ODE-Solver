@@ -22,7 +22,7 @@
  * The original Fortran 77 version of this code was by Michael Powell (M.J.D.Powell @ damtp.cam.ac.uk)
  * The Fortran 90 version was by Alan Miller (Alan.Miller @ vic.cmis.csiro.au). Latest revision - 30 October 1998
  */
-package src.com.cureos.numerics;
+package com.cureos.numerics;
 
 /**
  * Constrained Optimization BY Linear Approximation in Java.
@@ -58,7 +58,7 @@ public class Cobyla
      * @param maxfun Maximum number of function evaluations before terminating.
      * @return Exit status of the COBYLA2 optimization.
      */
-    public static com.cureos.numerics.CobylaExitStatus FindMinimum(final Calcfc calcfc, int n, int m, double[] x, double rhobeg, double rhoend, int iprint, int maxfun)
+    public static com.cureos.numerics.CobylaExitStatus FindMinimum(final com.cureos.numerics.Calcfc calcfc, int n, int m, double[] x, double rhobeg, double rhoend, int iprint, int maxfun)
     {
         //     This subroutine minimizes an objective function F(X) subject to M
         //     inequality constraints on X, where X is a vector of variables that has
