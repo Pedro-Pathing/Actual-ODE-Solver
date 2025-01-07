@@ -15,16 +15,14 @@ public class ConstantHeadingDifferentialEquation implements FirstOrderDifferenti
     private final double mass; //kg
     private final double mu_k;
     private final double c_1;
-    private final double c_2;
     private final CubicBezierCurve path;
 
-    public ConstantHeadingDifferentialEquation(double theta, double vMax, double mass, double muK, double c1, double c2, CubicBezierCurve path) {
+    public ConstantHeadingDifferentialEquation(double theta, double vMax, double mass, double muK, double c1, CubicBezierCurve path) {
         this.theta = theta;
         v_max = vMax;
         this.mass = mass;
         mu_k = muK;
         c_1 = c1;
-        c_2 = c2;
         this.path = path;
     }
 
@@ -39,7 +37,7 @@ public class ConstantHeadingDifferentialEquation implements FirstOrderDifferenti
         Point2D.Double pathPrime = path.computePathPrimes(t);
         Vector2D pathPrimes = new Vector2D(pathPrime.getX(), pathPrime.getY());
 
-        double scalar = (pathPrimes.dotProduct(new Vector2D(FastMath.cos(theta), FastMath.sin(theta))) * v_max - pathPrimes.getNorm() * ((mu_k * mass * c_1) + c_2 * FastMath.abs(FastMath.sin(theta-FastMath.atan2(pathPrime.getY(), pathPrime.getX())))))/pathPrimes.getNormSq();
+        double scalar = (pathPrimes.dotProduct(new Vector2D(FastMath.cos(theta), FastMath.sin(theta))) * v_max - pathPrimes.getNorm() * ((mu_k * mass) + c_1 * FastMath.abs(FastMath.sin(theta-FastMath.atan2(pathPrime.getY(), pathPrime.getX())))))/pathPrimes.getNormSq();
 
         doubles1[0] = scalar * pathPrimes.getX();
         doubles1[1] = scalar * pathPrimes.getY();

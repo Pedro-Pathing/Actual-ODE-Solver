@@ -70,7 +70,7 @@ public class ConstantHeadingSolver {
     }
 
     private Point2D.Double[] solveDifferentialEquation(double theta, CubicBezierCurve bezierCurve) {
-        ConstantHeadingDifferentialEquation diffeq = new ConstantHeadingDifferentialEquation(theta, v_max, mass, mu_k, c_1, c_2, bezierCurve);
+        ConstantHeadingDifferentialEquation diffeq = new ConstantHeadingDifferentialEquation(theta, v_max, mass, mu_k, c_1, bezierCurve);
         ExpandableStatefulODE expandableODE = new ExpandableStatefulODE(diffeq);
         expandableODE.setTime(0);
         double[] primaryState = {p_0.getX(),p_0.getY()};

@@ -14,7 +14,6 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.MultiStartMultivariateOptimizer;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.BOBYQAOptimizer;
-import org.apache.commons.math3.random.RandomVectorGenerator;
 import org.apache.commons.math3.util.FastMath;
 
 import java.awt.geom.Point2D;
@@ -36,6 +35,9 @@ public class TangentialHeadingSolver {
     private final double submersibleTolerance; // Tolerance for submersibles
     private final double robotWidth; // Width of the robot
     private final double robotHeight; // Height of the robot
+    private final double feedforward;
+    private final double proportional;
+    private final double derivative;
 
     // Integrator and Output Model
     private final GillIntegrator integrator;
@@ -48,7 +50,7 @@ public class TangentialHeadingSolver {
     public TangentialHeadingSolver(
             double vMax, double mass, double muK, double c1, double c2, Point2D p0, Point2D p3,
             double thetaFinal, double boundaryTolerance, double submersibleDistanceTolerance, boolean isBlueAlliance,
-            double thetaInitial, double angularVelocity, double robotWidth, double robotHeight) {
+            double thetaInitial, double angularVelocity, double robotWidth, double robotHeight, double feedforward, double proportional, double derivative) {
         this.v_max = vMax;
         this.mass = mass;
         this.mu_k = muK;
@@ -64,6 +66,9 @@ public class TangentialHeadingSolver {
         this.submersibleTolerance = submersibleDistanceTolerance;
         this.robotWidth = robotWidth;
         this.robotHeight = robotHeight;
+        this.feedforward = feedforward;
+        this.proportional = proportional;
+        this.derivative = derivative;
 
         // Integrator
         this.integrator = new GillIntegrator(0.005);
@@ -112,7 +117,7 @@ public class TangentialHeadingSolver {
     }
 
     private Point2D.Double[] solveDifferentialEquation(double theta, CubicBezierCurve bezierCurve) {
-        TangentialHeadingDifferentialEquation diffeq = new TangentialHeadingDifferentialEquation(theta, v_max, mass, mu_k, c_1, c_2, bezierCurve);
+        TangentialHeadingDifferentialEquation diffeq = new TangentialHeadingDifferentialEquation(theta, v_max, mass, mu_k, c_1, c_2, bezierCurve, angularVelocity, feedforward, proportional, derivative);
         ExpandableStatefulODE expandableODE = new ExpandableStatefulODE(diffeq);
         expandableODE.setTime(0);
         expandableODE.setPrimaryState(new double[]{p_0.getX(), p_0.getY()});
@@ -165,8 +170,7 @@ public class TangentialHeadingSolver {
                 new Point2D.Double(10, 5),
                 new Point2D.Double(10, 110),
                 FastMath.PI / 2, 3, 3,
-                true, 0, 6, 12.83, 15.75
-        );
+                true, 0, 6, 12.83, 15.75, 0,0,0);
         SolutionPoints solution = solver.getSolution();
         System.out.println(solution);
     }
