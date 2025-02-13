@@ -80,26 +80,6 @@ public class CubicBezierCurve {
         return arcLength;
     }
 
-    public double intersectionWeight(boolean isBlue, double theta, double boundaryTolerance, double submersibleTolerance, double robotWidth, double robotHeight) {
-        double a = 0,b = 0,c = 0,d = 0,e = 0;
-        for (int i = 0; i < 100; i++) {
-            Point2D.Double center = compute((double) i/100);
-            a = collidesWithSubmersible(theta, center, submersibleTolerance, robotWidth, robotHeight);
-            b = collidesWithAllianceBoundary(theta, center, boundaryTolerance, robotWidth, robotHeight);
-            if (!isBlue) {
-                c = collidesWithOuterBoundaryRed(theta, center, boundaryTolerance, robotWidth, robotHeight);
-            } else {
-                c = collidesWithOuterBoundaryBlue(theta, center, boundaryTolerance, robotWidth, robotHeight);
-            }
-
-            d = collidesWithLeftBoundary(theta, center, robotWidth, robotHeight, boundaryTolerance);
-
-            e = collidesWithRightBoundary(theta, center, boundaryTolerance, robotWidth, robotHeight);
-        }
-
-        return 20*(a+b+c+d+e)/100;
-    }
-
     public Point2D getP_0() {
         return P_0;
     }
