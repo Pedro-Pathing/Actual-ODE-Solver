@@ -1,0 +1,16 @@
+<component name="libraryTable">
+  <library name="opt4j.operators" type="repository">
+    <properties maven-id="org.opt4j:opt4j-operators:3.1.4" />
+    <CLASSES>
+      <root url="jar://$PROJECT_DIR$/lib/opt4j-operators-3.1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/opt4j-core-3.1.4.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/guice-multibindings-4.0-beta5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/guice-4.0-beta5.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/javax.inject-1.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/aopalliance-1.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/lib/guava-16.0.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES />
+  </library>
+</component>
