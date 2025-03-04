@@ -65,9 +65,11 @@ public class HeadingSolver {
         p_heading = pHeading;
         timeFunction = doubles -> {
             CubicBezierCurve bezierCurve = new CubicBezierCurve(p_0, new Point2D.Double(doubles[1], doubles[2]), new Point2D.Double(doubles[3], doubles[4]),p_3);
-            return findT1(solveDifferentialEquation(doubles[0], bezierCurve),bezierCurve.getArcLength()) + findT2(doubles[0]);
+            return findT1(solveDifferentialEquation(doubles[0], bezierCurve),bezierCurve.getArcLength()) + findT2(doubles[0]) + bezierCurve.intersectionPenalty(isBlueAlliance, doubles[0], boundaryTolerance, submersibleTolerance, robotWidth, robotHeight);
         };
     }
+
+
 
     public void setHeadingState(HeadingState headingState) {
         this.headingState = headingState;

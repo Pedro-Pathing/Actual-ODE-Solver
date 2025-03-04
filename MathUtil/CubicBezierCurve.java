@@ -95,4 +95,65 @@ public class CubicBezierCurve {
     public Point2D getP_3() {
         return P_3;
     }
+
+    private double collidesWithSubmersible(double theta, Point2D.Double center, double submersibleTolerance, double robotWidth, double robotHeight) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle submersible = RectangleIntersection.createRotatedRectangle(new Point2D.Double(72, 72), 27.5 + 2*submersibleTolerance, 42.75 + 2*submersibleTolerance, 0);
+
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot, submersible), 0);
+    }
+
+    private double collidesWithAllianceBoundary(double theta, Point2D.Double center, double boundaryTolerance, double robotWidth, double robotHeight) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle allianceBoundary = RectangleIntersection.createRotatedRectangle(new Point2D.Double(72, 72), 144, 2*boundaryTolerance, 0);
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot,allianceBoundary), 0);
+    }
+
+    private double collidesWithOuterBoundaryBlue(double theta, Point2D.Double center, double boundaryTolerance, double robotWidth, double robotHeight) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle boundary = RectangleIntersection.createRotatedRectangle(new Point2D.Double(0, 72), 144, boundaryTolerance, 0);
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot,boundary), 0);
+    }
+
+    private double collidesWithOuterBoundaryRed(double theta, Point2D.Double center, double boundaryTolerance, double robotWidth, double robotHeight) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle boundary = RectangleIntersection.createRotatedRectangle(new Point2D.Double(144, 72), 144, boundaryTolerance, 0);
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot,boundary), 0);
+    }
+
+    private double collidesWithRightBoundary(double theta, Point2D.Double center, double boundaryTolerance, double robotWidth, double robotHeight) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle boundary = RectangleIntersection.createRotatedRectangle(new Point2D.Double(72, 144), boundaryTolerance, 144, 0);
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot,boundary), 0);
+    }
+
+    private double collidesWithLeftBoundary(double theta, Point2D.Double center, double robotWidth, double robotHeight, double boundaryTolerance) {
+        RectangleIntersection.Rectangle robot = RectangleIntersection.createRotatedRectangle(center, robotWidth, robotHeight, theta);
+        RectangleIntersection.Rectangle boundary = RectangleIntersection.createRotatedRectangle(new Point2D.Double(72, 0), boundaryTolerance, 144, 0);
+        return Math.max(RectangleIntersection.getMaximumOverlap(robot,boundary), 0);
+    }
+
+    public double intersectionPenalty(boolean isBlue, double theta, double boundaryTolerance, double submersibleTolerance, double robotWidth, double robotHeight) {
+        double a = 0,b = 0,c = 0,d = 0,e = 0;
+        for (int i = 0; i < 100; i++) {
+            Point2D.Double center = compute((double) i/100);
+            a = Math.max(collidesWithSubmersible(theta, center, submersibleTolerance, robotWidth, robotHeight), a);
+            b = collidesWithAllianceBoundary(theta, center, boundaryTolerance, robotWidth, robotHeight);
+            if (!isBlue) {
+                c = collidesWithOuterBoundaryRed(theta, center, boundaryTolerance, robotWidth, robotHeight);
+            } else {
+                c = collidesWithOuterBoundaryBlue(theta, center, boundaryTolerance, robotWidth, robotHeight);
+            }
+
+            d = collidesWithLeftBoundary(theta, center, robotWidth, robotHeight, boundaryTolerance);
+
+            e = collidesWithRightBoundary(theta, center, boundaryTolerance, robotWidth, robotHeight);
+        }
+
+        return penaltyFunction(a) + penaltyFunction(b) + penaltyFunction(c) + penaltyFunction(d) + penaltyFunction(e);
+    }
+
+    private double penaltyFunction(double penalizedInput) {
+        return FastMath.log(Math.pow(2,penalizedInput*15));
+    }
 }
