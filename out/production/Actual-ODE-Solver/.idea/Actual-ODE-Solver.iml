@@ -8,5 +8,10 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="commons-math3-3.6.1" level="project" />
+    <orderEntry type="library" name="opt4j.core" level="project" />
+    <orderEntry type="library" name="opt4j.benchmarks" level="project" />
+    <orderEntry type="library" name="opt4j.operators" level="project" />
+    <orderEntry type="library" name="opt4j.optimizers" level="project" />
+    <orderEntry type="library" name="opt4j.satdecoding" level="project" />
   </component>
 </module>
